@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<!-- saved from url=(0037)file:///C:/Downloads/los_tinchos.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Los Tinchos - Agenda de Turnos</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #111;
+        color: #fff;
+    }
+    header {
+        background: #181818;
+        padding: 24px;
+        text-align: center;
+        border-bottom: 2px solid #d4af37;
+    }
+    header h1 { margin: 0; color: #d4af37; font-size: 36px; }
+    header p { margin: 8px 0 0; color: #ccc; }
+
+    .container {
+        max-width: 1050px;
+        margin: 30px auto;
+        padding: 0 18px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 22px;
+    }
+
+    .card {
+        background: #1d1d1d;
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: 0 8px 25px rgba(0,0,0,.35);
+    }
+
+    h2 { margin-top: 0; color: #d4af37; }
+
+    label {
+        display: block;
+        margin: 14px 0 6px;
+        color: #ddd;
+        font-weight: bold;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #555;
+        background: #292929;
+        color: white;
+        font-size: 15px;
+    }
+
+    button {
+        width: 100%;
+        margin-top: 20px;
+        padding: 13px;
+        border: 0;
+        border-radius: 8px;
+        background: #d4af37;
+        color: #111;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    button:hover { opacity: .9; }
+
+    .turno {
+        background: #292929;
+        border-left: 4px solid #d4af37;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+
+    .turno strong { color: #d4af37; }
+
+    .eliminar {
+        width: auto;
+        margin-top: 10px;
+        padding: 8px 12px;
+        background: #b33;
+        color: white;
+        font-size: 13px;
+    }
+
+    .vacio {
+        color: #aaa;
+        text-align: center;
+        padding: 25px 0;
+    }
+
+    .mensaje {
+        margin-top: 15px;
+        padding: 12px;
+        border-radius: 8px;
+        display: none;
+        background: #244d2b;
+        color: #c9ffd0;
+    }
+
+    @media (max-width: 750px) {
+        .grid { grid-template-columns: 1fr; }
+    }
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>💈 LOS TINCHOS</h1>
+    <p>Agenda de turnos - Barbería</p>
+</header>
+
+<div class="container">
+    <div class="grid">
+
+        <section class="card">
+            <h2>📅 Nuevo turno</h2>
+
+            <form id="formTurno">
+                <label for="cliente">Nombre del cliente</label>
+                <input id="cliente" type="text" placeholder="Ej: Alejo Adaro" required="">
+
+                <label for="telefono">Teléfono</label>
+                <input id="telefono" type="tel" placeholder="Ej: 11 1234-5678">
+
+                <label for="barbero">Barbero</label>
+                <select id="barbero" required="">
+                    <option value="">Seleccionar barbero</option>
+                    <option>Alejo Adaro</option>
+                    <option>Nicolás Durán</option>
+                </select>
+
+                <label for="servicio">Servicio</label>
+                <select id="servicio" required="">
+                    <option value="">Seleccionar servicio</option>
+                    <option>Corte de pelo</option>
+                    <option>Barba</option>
+                    <option>Corte + barba</option>
+                    <option>Diseño</option>
+                </select>
+
+                <label for="fecha">Fecha</label>
+                <input id="fecha" type="date" required="">
+
+                <label for="hora">Hora</label>
+                <input id="hora" type="time" required="">
+
+                <button type="submit">✂️ AGENDAR TURNO</button>
+                <div class="mensaje" id="mensaje" style="display: none;">✅ Turno agendado correctamente.</div>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>📋 Turnos agendados</h2>
+            <div id="listaTurnos"><div class="vacio">Todavía no hay turnos agendados.</div></div>
+        </section>
+
+    </div>
+</div>
+
+<script>
+const form = document.getElementById("formTurno");
+const lista = document.getElementById("listaTurnos");
+const mensaje = document.getElementById("mensaje");
+
+let turnos = JSON.parse(localStorage.getItem("turnosLosTinchos")) || [];
+
+function guardar() {
+    localStorage.setItem("turnosLosTinchos", JSON.stringify(turnos));
+}
+
+function mostrarTurnos() {
+    lista.innerHTML = "";
+
+    if (turnos.length === 0) {
+        lista.innerHTML = '<div class="vacio">Todavía no hay turnos agendados.</div>';
+        return;
+    }
+
+    turnos.sort((a,b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora));
+
+    turnos.forEach((turno, index) => {
+        const div = document.createElement("div");
+        div.className = "turno";
+        div.innerHTML = `
+            <strong>${escapeHTML(turno.cliente)}</strong><br>
+            📞 ${escapeHTML(turno.telefono || "Sin teléfono")}<br>
+            💈 Barbero: ${escapeHTML(turno.barbero)}<br>
+            ✂️ Servicio: ${escapeHTML(turno.servicio)}<br>
+            📅 Fecha: ${escapeHTML(formatearFecha(turno.fecha))}<br>
+            🕐 Hora: ${escapeHTML(turno.hora)}
+            <br>
+            <button class="eliminar" onclick="eliminarTurno(${index})">Eliminar turno</button>
+        `;
+        lista.appendChild(div);
+    });
+}
+
+function eliminarTurno(index) {
+    if (confirm("¿Querés eliminar este turno?")) {
+        turnos.splice(index, 1);
+        guardar();
+        mostrarTurnos();
+    }
+}
+
+function formatearFecha(fecha) {
+    const partes = fecha.split("-");
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
+
+function escapeHTML(texto) {
+    return String(texto).replace(/[&<>"']/g, function(c) {
+        return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c];
+    });
+}
+
+form.addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const nuevo = {
+        cliente: document.getElementById("cliente").value,
+        telefono: document.getElementById("telefono").value,
+        barbero: document.getElementById("barbero").value,
+        servicio: document.getElementById("servicio").value,
+        fecha: document.getElementById("fecha").value,
+        hora: document.getElementById("hora").value
+    };
+
+    // Evita reservar dos turnos para el mismo barbero a la misma hora.
+    const ocupado = turnos.some(t =>
+        t.barbero === nuevo.barbero &&
+        t.fecha === nuevo.fecha &&
+        t.hora === nuevo.hora
+    );
+
+    if (ocupado) {
+        alert("⚠️ Ese barbero ya tiene un turno en esa fecha y hora.");
+        return;
+    }
+
+    turnos.push(nuevo);
+    guardar();
+    mostrarTurnos();
+
+    mensaje.style.display = "block";
+    setTimeout(() => mensaje.style.display = "none", 2500);
+
+    form.reset();
+});
+
+mostrarTurnos();
+</script>
+
+
+
+</body></html>
